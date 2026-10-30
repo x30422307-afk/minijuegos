@@ -1,0 +1,70 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<style>
+html,body{margin:0;height:100%;background:#000;color:#fff;font-family:monospace;overflow:hidden;touch-action:none;user-select:none}
+#m{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:24px}
+button{background:#000;color:#fff;border:2px solid #fff;font:20px monospace;padding:16px 32px;width:240px}
+canvas{display:none;width:100%;height:100%}
+#b{display:none;position:fixed;top:8px;left:8px;width:auto;padding:6px 14px;font-size:18px;z-index:2}
+</style></head><body>
+<div id="m"><div>MINIJUEGOS</div><button onclick="go(1)">SNAKE</button><button onclick="go(2)">DINO</button></div>
+<button id="b" onclick="back()">&lt;</button>
+<canvas id="c"></canvas>
+<script>
+var c=document.getElementById('c'),x=c.getContext('2d'),m=document.getElementById('m'),b=document.getElementById('b'),W,H,mode=0,loop,tx,ty;
+function size(){W=c.width=innerWidth;H=c.height=innerHeight}
+size();onresize=size;
+function go(n){mode=n;m.style.display='none';c.style.display='block';b.style.display='block';size();n==1?snake():dino()}
+function back(){clearInterval(loop);mode=0;c.style.display='none';b.style.display='none';m.style.display='flex'}
+function msg(t){x.fillStyle='#fff';x.font='24px monospace';x.fillText(t,W/2-90,H/2)}
+var dir,nd,sn,fd,sc,over;
+function snake(){
+ var g=20,cols=Math.floor(W/g),rows=Math.floor(H/g);
+ sn=[{x:5,y:5}];dir=nd={x:1,y:0};sc=0;over=0;fd={x:10,y:10};
+ clearInterval(loop);
+ loop=setInterval(function(){
+  if(over)return;
+  dir=nd;var h={x:sn[0].x+dir.x,y:sn[0].y+dir.y};
+  if(h.x<0||h.y<0||h.x>=cols||h.y>=rows||sn.some(function(s){return s.x==h.x&&s.y==h.y})){over=1;msg('GAME OVER '+sc);return}
+  sn.unshift(h);
+  if(h.x==fd.x&&h.y==fd.y){sc++;fd={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}else sn.pop();
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  x.fillStyle='#f00';x.fillRect(fd.x*g,fd.y*g,g-2,g-2);
+  x.fillStyle='#fff';sn.forEach(function(s){x.fillRect(s.x*g,s.y*g,g-2,g-2)});
+  x.font='20px monospace';x.fillText(sc,W-40,30);
+ },110);
+}
+var py,vy,ob,ds,dover,gy;
+function dino(){
+ gy=H*0.7;py=gy;vy=0;ob=[];ds=0;dover=0;var t=0;
+ clearInterval(loop);
+ loop=setInterval(function(){
+  if(dover)return;
+  t++;ds++;vy+=0.9;py+=vy;if(py>=gy){py=gy;vy=0}
+  if(t%70==0)ob.push({x:W,w:14+Math.random()*10,h:30+Math.random()*30});
+  var sp=6+ds/400;
+  ob.forEach(function(o){o.x-=sp});
+  ob=ob.filter(function(o){return o.x>-40});
+  x.fillStyle='#000';x.fillRect(0,0,W,H);
+  x.fillStyle='#fff';x.fillRect(0,gy,W,2);
+  x.beginPath();x.arc(60,py-8,8,0,7);x.fill();
+  x.font='20px monospace';x.fillText(Math.floor(ds/10),W-60,30);
+  x.fillStyle='#0f0';
+  ob.forEach(function(o){
+   x.fillRect(o.x,gy-o.h,o.w,o.h);
+   if(o.x<68&&o.x+o.w>52&&py>gy-o.h){dover=1;msg('GAME OVER')}
+  });
+ },20);
+}
+function jump(){if(py>=gy)vy=-16}
+c.ontouchstart=function(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY};
+c.ontouchend=function(e){
+ var t=e.changedTouches[0],dx=t.clientX-tx,dy=t.clientY-ty;
+ if(mode==1){
+  if(over){snake();return}
+  if(Math.abs(dx)<20&&Math.abs(dy)<20)return;
+  if(Math.abs(dx)>Math.abs(dy)){if(dx>0&&dir.x==0)nd={x:1,y:0};else if(dx<0&&dir.x==0)nd={x:-1,y:0}}
+  else{if(dy>0&&dir.y==0)nd={x:0,y:1};else if(dy<0&&dir.y==0)nd={x:0,y:-1}}
+ }else if(mode==2){dover?dino():jump()}
+};
+</script></body></html>
